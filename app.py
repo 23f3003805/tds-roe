@@ -31,13 +31,22 @@ DATASET_SPLIT  = "train"
 print(f"Loading dataset {DATASET_NAME} ({DATASET_CONFIG}) ...")
 try:
     from datasets import load_dataset
+    from huggingface_hub import login
+    hf_token = os.environ.get("HF_TOKEN")
+    if hf_token:
+        login(token=hf_token)
+        print("HuggingFace login successful.")
+    else:
+        print("WARNING: No HF_TOKEN found. Set it in Render environment variables.")
     raw_ds = load_dataset(DATASET_NAME, DATASET_CONFIG, split=DATASET_SPLIT)
     df_full = raw_ds.to_pandas()
     # Drop the raw audio column for stats (we keep it separately for matching)
     AUDIO_COL = "audio"   # HuggingFace stores audio as dict with 'array' + 'path' + 'sampling_rate'
     print(f"Dataset loaded: {len(df_full)} rows, columns: {list(df_full.columns)}")
 except Exception as e:
+    import traceback
     print(f"WARNING: Could not load dataset at startup: {e}")
+    traceback.print_exc()
     df_full = pd.DataFrame()   # empty fallback so server still starts
 
 # ─────────────────────────────────────────────
